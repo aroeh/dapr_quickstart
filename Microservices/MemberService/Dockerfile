@@ -1,22 +1,42 @@
-#See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
+# The context refers to the source directory for the build
+# This file is setup to run with the project file as the context
+# docker build -t weatherimage .
+# COPY sources use either the file name or . since the context is set as the directory containing the .csproj file
 
-FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
-WORKDIR /app
-EXPOSE 80
-EXPOSE 443
+# Build context: Microservices/MemberService
 
+# setting up the build image
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
-WORKDIR /src
-COPY ["MemberService/MemberService.csproj", "MemberService/"]
-RUN dotnet restore "MemberService/MemberService.csproj"
-COPY . .
-WORKDIR "/src/MemberService"
-RUN dotnet build "MemberService.csproj" -c Release -o /app/build
+WORKDIR /source
 
+# copy the .csproj from the context directory to the image directory
+# copy Microservices/MemberService/MemberService.csproj to the build image directory /source/output
+COPY MemberService.csproj output/
+
+# restore packages on the api project from the image directory
+RUN dotnet restore output/MemberService.csproj
+
+# copy the remaining api and lib project files
+# copy everything in Microservices/MemberService to the build image directory /source/output
+COPY . output/
+
+# set the working directory to build image directory /source/project
+WORKDIR /source/output
+
+# build the api and lib projects for release configuration
+RUN dotnet build MemberService.csproj -c release
+
+# Get the files from the build image and publish them for release
+# output the published files into the /app directory
 FROM build AS publish
-RUN dotnet publish "MemberService.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish -c release --no-build -o /app
 
-FROM base AS final
+# setting up the staging image for running the app and set the current working directory as app
+FROM mcr.microsoft.com/dotnet/aspnet:7.0
 WORKDIR /app
-COPY --from=publish /app/publish .
+
+# copy the files from the published image app directory to the stage image app directory
+COPY --from=publish /app .
+
+# set the entry point command and dll for the app in the image
 ENTRYPOINT ["dotnet", "MemberService.dll"]

@@ -13,7 +13,7 @@ namespace DojoService.Repo
         public DojoRepo(ILogger<DojoRepo> log)
         {
             logger = log;
-            client = new MongoClient("connection string needs to go here");
+            client = new MongoClient(Environment.GetEnvironmentVariable("MONGODB_CONNSTRING"));
             database = client.GetDatabase("dojo_records");
             collection = database.GetCollection<Dojo>("dojo");
         }

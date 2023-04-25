@@ -1,0 +1,119 @@
+version: '3.9'
+
+networks:
+  default:
+
+services:
+  # cache:
+  #   image: redis
+  #   container_name: microservices_redis
+  #   networks:
+  #     - default
+  #   restart: always
+  #   ports:
+  #     - 6379:6379
+  #   command: redis-server --save 20 1 --loglevel warning --requirepass <password> # authentication command
+  #   volumes: # volume binding for persistent cache
+  #     - cache:/data
+
+  mongodb:
+    image: mongo
+    container_name: microservices_mongodb
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=AzureDiamond
+      - MONGO_INITDB_ROOT_PASSWORD=hunter2
+  
+  dojo_service:
+    image: ${DOCKER_REGISTRY-}dojoservice
+    container_name: microservices_dojo
+    networks:
+      - default
+    build:
+      context: ./Microservices/DojoService
+      dockerfile: Dockerfile
+    ports:
+      - 5091:80
+      - 7159:443
+    depends_on:
+      - mongodb
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_HTTPS_PORT=7159
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=certpassword
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/dockerquickstart.pfx
+      - MONGODB_CONNSTRING=mongodb://AzureDiamond:hunter2@mongodb
+    volumes:
+      - ~/.aspnet/https:/https:ro
+
+  member_service:
+    image: ${DOCKER_REGISTRY-}memberservice
+    container_name: microservices_member
+    networks:
+      - default
+    build:
+      context: ./Microservices/MemberService
+      dockerfile: Dockerfile
+    ports:
+      - 5130:80
+      - 7027:443
+    depends_on:
+      - mongodb
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_HTTPS_PORT=7027
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=certpassword
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/dockerquickstart.pfx
+      - MONGODB_CONNSTRING=mongodb://AzureDiamond:hunter2@mongodb
+    volumes:
+      - ~/.aspnet/https:/https:ro
+
+  payment_service:
+    image: ${DOCKER_REGISTRY-}paymentservice
+    container_name: microservices_payment
+    networks:
+      - default
+    build:
+      context: ./Microservices/PaymentService
+      dockerfile: Dockerfile
+    ports:
+      - 5033:80
+      - 7201:443
+    depends_on:
+      - mongodb
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_HTTPS_PORT=7201
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=certpassword
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/dockerquickstart.pfx
+      - MONGODB_CONNSTRING=mongodb://AzureDiamond:hunter2@mongodb
+    volumes:
+      - ~/.aspnet/https:/https:ro
+
+  notification_service:
+    image: ${DOCKER_REGISTRY-}notificationservice
+    container_name: microservices_notification
+    networks:
+      - default
+    build:
+      context: ./Microservices/NotificationService
+      dockerfile: Dockerfile
+    ports:
+      - 5197:80
+      - 7088:443
+    depends_on:
+      - mongodb
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_HTTPS_PORT=7088
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=certpassword
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/dockerquickstart.pfx
+      - MONGODB_CONNSTRING=mongodb://AzureDiamond:hunter2@mongodb
+    volumes:
+      - ~/.aspnet/https:/https:ro
