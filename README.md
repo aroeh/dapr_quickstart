@@ -11,3 +11,4 @@ This repository will be used to explore dapr and microservices development
 # References
 - [dapr.io](https://dapr.io/)
 - [dapr github](https://github.com/dapr)
+- [eShop on Dapr](https://github.com/dotnet-architecture/eShopOnDapr)
