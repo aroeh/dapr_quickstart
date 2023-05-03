@@ -10,10 +10,10 @@ namespace DojoService.Repo
         private readonly IMongoDatabase database;
         private readonly IMongoCollection<Dojo> collection;
 
-        public DojoRepo(ILogger<DojoRepo> log)
+        public DojoRepo(ILogger<DojoRepo> log, IConfiguration config)
         {
             logger = log;
-            client = new MongoClient(Environment.GetEnvironmentVariable("MONGODB_CONNSTRING"));
+            client = new MongoClient(config["mongodb"]);
             database = client.GetDatabase("dojo_records");
             collection = database.GetCollection<Dojo>("dojo");
         }

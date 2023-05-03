@@ -12,9 +12,6 @@ services:
   #   restart: always
   #   ports:
   #     - 6379:6379
-  #   command: redis-server --save 20 1 --loglevel warning --requirepass <password> # authentication command
-  #   volumes: # volume binding for persistent cache
-  #     - cache:/data
 
   mongodb:
     image: mongo
@@ -45,7 +42,6 @@ services:
       - ASPNETCORE_HTTPS_PORT=7159
       - ASPNETCORE_Kestrel__Certificates__Default__Password=certpassword
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/dockerquickstart.pfx
-      - MONGODB_CONNSTRING=mongodb://AzureDiamond:hunter2@mongodb
     volumes:
       - ~/.aspnet/https:/https:ro
 
@@ -67,71 +63,122 @@ services:
       - "./dapr/configuration/:/configuration"
     network_mode: "service:dojoservice"
   
-  # member_service:
-  #   image: ${DOCKER_REGISTRY-}memberservice
-  #   container_name: microservices_member
-  #   networks:
-  #     - default
-  #   build:
-  #     context: ./Microservices/MemberService
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - 5130:80
-  #     - 7027:443
-  #   depends_on:
-  #     - mongodb
-  #   environment:
-  #     - ASPNETCORE_ENVIRONMENT=Development
-  #     - ASPNETCORE_URLS=https://+:443;http://+:80
-  #     - ASPNETCORE_HTTPS_PORT=7027
-  #     - ASPNETCORE_Kestrel__Certificates__Default__Password=certpassword
-  #     - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/dockerquickstart.pfx
-  #     - MONGODB_CONNSTRING=mongodb://AzureDiamond:hunter2@mongodb
-  #   volumes:
-  #     - ~/.aspnet/https:/https:ro
+  memberservice:
+    image: ${DOCKER_REGISTRY-}member.service:${TAG:-latest}
+    container_name: member-service
+    networks:
+      - default
+    build:
+      context: ./Microservices/MemberService
+      dockerfile: Dockerfile
+    ports:
+      - 5130:80
+      - 7027:443
+    depends_on:
+      - mongodb
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_HTTPS_PORT=7027
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=certpassword
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/dockerquickstart.pfx
+    volumes:
+      - ~/.aspnet/https:/https:ro
 
-  # payment_service:
-  #   image: ${DOCKER_REGISTRY-}paymentservice
-  #   container_name: microservices_payment
-  #   networks:
-  #     - default
-  #   build:
-  #     context: ./Microservices/PaymentService
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - 5033:80
-  #     - 7201:443
-  #   depends_on:
-  #     - mongodb
-  #   environment:
-  #     - ASPNETCORE_ENVIRONMENT=Development
-  #     - ASPNETCORE_URLS=https://+:443;http://+:80
-  #     - ASPNETCORE_HTTPS_PORT=7201
-  #     - ASPNETCORE_Kestrel__Certificates__Default__Password=certpassword
-  #     - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/dockerquickstart.pfx
-  #     - MONGODB_CONNSTRING=mongodb://AzureDiamond:hunter2@mongodb
-  #   volumes:
-  #     - ~/.aspnet/https:/https:ro
+  member_dapr:
+    image: "daprio/daprd:1.9.4"
+    depends_on:
+    - memberservice
+    command: [
+      "./daprd",
+      "-app-id", "memberservice",
+      "-app-port", "80",
+      "-log-level", "debug",
+      "-placement-host-address", "dapr-placement:50000",
+      "-components-path", "/local",
+      "-config", "/configuration/dapr-config.yaml"
+    ]
+    volumes:
+      - "./dapr/local/:/local"
+      - "./dapr/configuration/:/configuration"
+    network_mode: "service:memberservice"
+  
+  paymentservice:
+    image: ${DOCKER_REGISTRY-}payment.service:${TAG:-latest}
+    container_name: payment-service
+    networks:
+      - default
+    build:
+      context: ./Microservices/PaymentService
+      dockerfile: Dockerfile
+    ports:
+      - 5033:80
+      - 7201:443
+    depends_on:
+      - mongodb
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_HTTPS_PORT=7201
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=certpassword
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/dockerquickstart.pfx
+    volumes:
+      - ~/.aspnet/https:/https:ro
 
-  # notification_service:
-  #   image: ${DOCKER_REGISTRY-}notificationservice
-  #   container_name: microservices_notification
-  #   networks:
-  #     - default
-  #   build:
-  #     context: ./Microservices/NotificationService
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - 5197:80
-  #     - 7088:443
-  #   depends_on:
-  #     - mongodb
-  #   environment:
-  #     - ASPNETCORE_ENVIRONMENT=Development
-  #     - ASPNETCORE_URLS=https://+:443;http://+:80
-  #     - ASPNETCORE_HTTPS_PORT=7088
-  #     - ASPNETCORE_Kestrel__Certificates__Default__Password=certpassword
-  #     - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/dockerquickstart.pfx
-  #     - MONGODB_CONNSTRING=mongodb://AzureDiamond:hunter2@mongodb
-  #   volumes:
-  #     - ~/.aspnet/https:/https:ro
+  payment_dapr:
+    image: "daprio/daprd:1.9.4"
+    depends_on:
+    - paymentservice
+    command: [
+      "./daprd",
+      "-app-id", "paymentservice",
+      "-app-port", "80",
+      "-log-level", "debug",
+      "-placement-host-address", "dapr-placement:50000",
+      "-components-path", "/local",
+      "-config", "/configuration/dapr-config.yaml"
+    ]
+    volumes:
+      - "./dapr/local/:/local"
+      - "./dapr/configuration/:/configuration"
+    network_mode: "service:paymentservice"
+  
+  notificationservice:
+    image: ${DOCKER_REGISTRY-}notification.service:${TAG:-latest}
+    container_name: notification-service
+    networks:
+      - default
+    build:
+      context: ./Microservices/NotificationService
+      dockerfile: Dockerfile
+    ports:
+      - 5197:80
+      - 7088:443
+    depends_on:
+      - mongodb
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_HTTPS_PORT=7088
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=certpassword
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/dockerquickstart.pfx
+    volumes:
+      - ~/.aspnet/https:/https:ro
+  
+  notification_dapr:
+    image: "daprio/daprd:1.9.4"
+    depends_on:
+    - notificationservice
+    command: [
+      "./daprd",
+      "-app-id", "notificationservice",
+      "-app-port", "80",
+      "-log-level", "debug",
+      "-placement-host-address", "dapr-placement:50000",
+      "-components-path", "/local",
+      "-config", "/configuration/dapr-config.yaml"
+    ]
+    volumes:
+      - "./dapr/local/:/local"
+      - "./dapr/configuration/:/configuration"
+    network_mode: "service:notificationservice"

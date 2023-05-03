@@ -1,0 +1,21 @@
+# For more info on HTTP files go to https://aka.ms/vs/httpfile
+
+
+@baseUrl = https://localhost:7159
+@contentType = application/json
+
+
+### POST - create new record
+POST {{baseUrl}}/dojo
+Content-Type: {{contentType}}
+
+{
+    "name": "Http Dojo"
+}
+
+### GET - get all records
+GET {{baseUrl}}/dojo
+
+### GET/Id - get record by Id
+@dojoId = 123
+GET {{baseUrl}}/dojo/{{dojoId}}

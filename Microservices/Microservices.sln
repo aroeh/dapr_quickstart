@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33530.505
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DojoService", "DojoService\DojoService.csproj", "{138BD2A3-FF13-4896-8C5F-93942E1AC1D5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DojoService", "DojoService\DojoService.csproj", "{138BD2A3-FF13-4896-8C5F-93942E1AC1D5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MemberService", "MemberService\MemberService.csproj", "{DA2426D8-0288-4C5B-8A14-AB183429569E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MemberService", "MemberService\MemberService.csproj", "{DA2426D8-0288-4C5B-8A14-AB183429569E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaymentService", "PaymentService\PaymentService.csproj", "{0F4DA29D-6376-40BD-89DB-0139CD2071E0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PaymentService", "PaymentService\PaymentService.csproj", "{0F4DA29D-6376-40BD-89DB-0139CD2071E0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationService", "NotificationService\NotificationService.csproj", "{15C5D0B2-D77E-44FC-AB20-A32B20722A5C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotificationService", "NotificationService\NotificationService.csproj", "{15C5D0B2-D77E-44FC-AB20-A32B20722A5C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
